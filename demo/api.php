@@ -24,6 +24,11 @@
                     <td> Senha: </td>
                     <td> <input type="text" id="serverPass" value="1q2w3e" style="width: 300px;"> </td>
                   </tr>
+                  <tr>
+                    <td> Acesso externo: </td>
+                    <td> <input type="checkbox" id="serverExt" value="" style="width: 300px;"> </td>
+                  </tr>
+
 		</table>
 		<table border=0 width="100%">
                   <tr>

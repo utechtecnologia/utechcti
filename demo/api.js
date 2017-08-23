@@ -113,7 +113,8 @@ function onopen() {
 
     var user = serverUser.val();
     var pass = serverPass.val();
-    login(user,pass, false);
+    var ext = serverExt.is(":checked") ? true : false;
+    login(user,pass, ext);
 }
 
 function onclose(e) {
@@ -530,6 +531,7 @@ var addMessage = function(data, type) {
 serverUrl = $('#serverUrl');
 serverUser = $('#serverUser');
 serverPass = $('#serverPass');
+serverExt = $('#serverExt');
 connectButton = $('#connectButton');
 disconnectButton = $('#disconnectButton'); 
 connectionStatus = $('#connectionStatus');
