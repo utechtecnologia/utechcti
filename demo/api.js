@@ -267,12 +267,15 @@ dialStatus.text("Atendida - " + state);
             }
             if(logged == false) {
 
+                addMessage(msgError);
+                alert(msgError);
                 connectButton.show();
                 connectionStatus.text('Desconectado');
                 serverUrl.removeAttr('disabled');
                 disconnectButton.hide();
                 messageArea.attr('disabled', 'disabled');
                 requestButton.attr('disabled', 'disabled');
+
                 clearLog();
                 disconnect();
             } else {
@@ -284,7 +287,7 @@ dialStatus.text("Atendida - " + state);
                         text: serverUser.val()
                     }));
                 }
-                connectionStatus.text('Conctado / Logado');
+                connectionStatus.text('Conectado / Logado');
                 serverUrl.attr('disabled', 'disabled');
             }
     }
