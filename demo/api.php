@@ -78,7 +78,7 @@
 		</div>
 	</fieldset>
 	<fieldset id="messageArea">
-		<legend>Message Log <button id="clearMessage">Limpar</button></legend>
+		<legend>Message Log <button id="clearMessage">Limpar</button> - Debug: <input type="checkbox" id="msgdebug"/></legend>
 		<div id="messages"></div>
 	</fieldset>
 

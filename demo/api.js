@@ -10,6 +10,7 @@ var connected = false;
 var logged = false;
 var socket = null;
 var permissions = 0;
+var debugenable = false;
 
 function debug(message) {
     if (debugStatus) {
@@ -475,7 +476,10 @@ dialStatus.text("Atendida - " + state);
               recv_event_contacts(params);
           break;
           default:
-              debug("Comando: "+params[0]+" nao implementado!");
+		if(debugenable == true) {
+			addMessage(params, "RECV");
+		}
+		debug("Comando: "+params[0]+" nao implementado!");
         }
     }
 
@@ -558,6 +562,7 @@ cmdRecords = $('#cmdRecords');
 cmdAgents = $('#cmdAgents');
 
 // log area...
+msgdebug = $('#msgdebug');
 messageArea = $('#messageArea');
 clearButton = $('');
 
@@ -628,3 +633,10 @@ cmdAgents.click(function(e) {
     sendMessage(msg);
 });
 
+
+msgdebug.change(function(e) {
+	if(debugenable == false)
+		debugenable = true;
+	else
+		debugenable = false;
+});
