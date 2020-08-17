@@ -338,6 +338,45 @@ dialStatus.text("Atendida - " + state);
             } 
     }
 
+	function toHHMMSS(seconds) {
+    	var h, m, s, result='';
+	    h = Math.floor(seconds/3600);
+    	seconds -= h*3600;
+	    if(h){
+    	    result = h<10 ? '0'+h+':' : h+':';
+	    }
+	    m = Math.floor(seconds/60);
+    	seconds -= m*60;
+	    result += m<10 ? '0'+m+':' : m+':';
+	    s=seconds%60;
+    	result += s<10 ? '0'+s : s;
+	    return result;
+	}
+
+    function recv_event_queue(params) {
+
+console.log(params);
+            if (params[0].match(/QUEUE/)) {
+
+
+                var data = params;
+		var n = Number(data[3].substr(4));
+		var a = Number(data[4].substr(6))
+		var t = n + a;
+		str = "=========== Fila: " + data[1] + " ===========\n";
+                str = str + "        Agentes Ativos:" + data[2].substr(4)+"\n";
+                str = str + "     Total de chamadas:" + t + "\n";
+                str = str + "    Chamadas Atendidas:" + data[3].substr(4)+"\n";
+                str = str + "Chamadas não Atendidas:" + data[4].substr(6)+"\n";
+                str = str + "           Tempo Total:" + toHHMMSS(data[5].substr(4)) + "\n";
+                str = str + "      Tempo em Espera :" + toHHMMSS(data[6].substr(4)) + "\n";
+                str = str + "  Tempo em Atendimento:" + toHHMMSS(data[7].substr(4)) + "\n";
+		str = str + "\n";
+                addMessage(str);
+
+            } 
+    }
+
 
     function recv_event_history(params) {
             if (params[1].match(/CALLS:/)) {
@@ -430,6 +469,7 @@ dialStatus.text("Atendida - " + state);
 
     function onmessage(e) {
         var msg = e.data;
+
         msg = msg.replace(/\r\n\r\n/, '');
 
         var params = parser(msg, msg.length);
@@ -475,6 +515,11 @@ dialStatus.text("Atendida - " + state);
           case 'PHONEBOOK':
               recv_event_contacts(params);
           break;
+
+          case "QUEUE":
+              recv_event_queue(params);
+          break;
+
           default:
 		if(debugenable == true) {
 			addMessage(params, "RECV");
@@ -635,8 +680,11 @@ cmdAgents.click(function(e) {
 
 
 msgdebug.change(function(e) {
-	if(debugenable == false)
+	if(debugenable == false) {
 		debugenable = true;
-	else
+        	alert("Debug habilitado! Todos comandos serão mostrados...");
+	}else{
 		debugenable = false;
+        alert("Debug desabilitado!");
+    }
 });
