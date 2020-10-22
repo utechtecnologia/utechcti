@@ -110,6 +110,8 @@ function onopen() {
     cmdRecords.removeAttr('disabled');
     cmdAgents.removeAttr('disabled');
 
+    $("#contentt").show();
+
     connected = true;
 
     var user = serverUser.val();
@@ -144,6 +146,7 @@ function onclose(e) {
     requestButton.attr('disabled', 'disabled');
     cmdAgents.attr('disabled', 'disabled');
 
+    $("#contentt").hide();
 
     // Try to reconnect ??
 };
@@ -158,6 +161,42 @@ function onerror(e) {
 function function_call_end(){
     dialStatus.text("Chamada finalizada!");
 }
+
+function call_tab_status(callid,caller,called,state)
+{
+        const ctab = document.getElementById("tbcalls");
+
+	if (ctab.rows[callid]) {
+
+		let row = ctab.rows[callid];
+		if(state == 'cleared') {
+			row.parentNode.removeChild(row);
+		}else {
+			let st = row.cells[3];
+			st.innerHTML = state;
+		}
+
+	} else {
+		if(state == 'cleared')
+			return;
+
+		//var row = document.getElementById(callid).rowIndex;
+		let row = ctab.insertRow();
+		row.id = callid;
+		let id = row.insertCell(0);
+		id.innerHTML = callid;
+
+		let src = row.insertCell(1);
+		src.innerHTML = caller;
+
+		let dst = row.insertCell(2);
+		dst.innerHTML = called;
+
+		let st = row.insertCell(3);
+		st.innerHTML = state;
+	}
+}
+
 
 function recv_event_call(params) {
 
@@ -203,8 +242,11 @@ function recv_event_call(params) {
             releasing = params[i].substr(10);
         }
     }
-    debug('Call event callid:'+callid+' state:'+state+' caller:'+caller+' called:'+called);
-    addMessage('Call event callid:'+callid+' state:'+state+' caller:'+caller+' called:'+called);
+    debug('OCall event callid:'+callid+' state:'+state+' caller:'+caller+' called:'+called);
+    addMessage('OCall event callid:'+callid+' state:'+state+' caller:'+caller+' called:'+called);
+
+    if (callid && state)
+    	    call_tab_status(callid,caller,called,state);
 
     if (callid && state) {
 
@@ -218,37 +260,37 @@ function recv_event_call(params) {
             break;
 
             case 'established':
-         dialStatus.text("Atendida - " + state);
+            dialStatus.text("Atendida - " + state);
             break;
 
-case 'queued':
-dialStatus.text("Atendida - " + state);
-                    break;
+            case 'queued':
+            dialStatus.text("Atendida - " + state);
+            break;
 
-                    case 'failed':
-                    dialStatus.text("Falha - " + state);
-                    break;
+           case 'failed':
+           dialStatus.text("Falha - " + state);
+           break;
 
-                    case 'cleared':
-                    dialStatus.text("Atendida - " + state);
-            setTimeout(function_call_end, 5000);
-                    break;
+           case 'cleared':
+           dialStatus.text("Atendida - " + state);
+           setTimeout(function_call_end, 5000);
+           break;
 
             case 'conferenced':
-                    dialStatus.text("Atendida - " + state);
-                    break;
-
-                case 'transferred':
-                    dialStatus.text("Atendida - " + state);
-                    break;
-
-            case 'diverted':
-                    dialStatus.text("FWD - " + state);
+            dialStatus.text("Atendida - " + state);
             break;
 
-                    default:
-                }
-            }
+           case 'transferred':
+           dialStatus.text("Atendida - " + state);
+           break;
+
+           case 'diverted':
+           dialStatus.text("FWD - " + state);
+           break;
+
+           default:
+        }
+      }
     }
 
     function recv_event_login(params) {
@@ -307,6 +349,21 @@ dialStatus.text("Atendida - " + state);
              addMessage("TIME: "+time+" DATE: "+date);
     }
 
+    function addTableContacts(contact) {
+	//data[1],data[2],data[3],data[6]);
+        const ctab = document.getElementById("tbcontacts");
+	let row = ctab.insertRow();
+	let name = row.insertCell(0);
+	name.innerHTML = contact[1];
+	let type = row.insertCell(1);
+	type.innerHTML = contact[2];
+	let num = row.insertCell(2);
+	num.innerHTML = contact[3];
+	let comp = row.insertCell(3);
+	comp.innerHTML = contact[6];
+
+    }
+
     function recv_event_contacts(params) {
 
             if (params[1].match(/CONTACTS:/)) {
@@ -334,9 +391,57 @@ dialStatus.text("Atendida - " + state);
                     }   
 
                     addMessage("Nome:"+data[1]+" Numero:"+data[3]+" Email:"+data[4]);
+                    addTableContacts(data);
                 }                     
             } 
     }
+
+    function change_queue_tab(id, aa, tc, ca, cna, tt, tee, tea)
+    {
+
+        const ctab = document.getElementById("tbqueues");
+
+	if (ctab.rows[id]) {
+
+
+		let row = ctab.rows[callid];
+		if(state == 'cleared') {
+			row.parentNode.removeChild(row);
+		}else {
+			let st = row.cells[3];
+			st.innerHTML = state;
+		}
+
+	} else {
+
+		//var row = document.getElementById(callid).rowIndex;
+
+		let row = ctab.insertRow();
+		row.id = id;
+
+		let rid = row.insertCell(0);
+		rid.innerHTML = id;
+
+		let raa = row.insertCell(1);
+		raa.innerHTML = aa;
+
+		let rtc = row.insertCell(2);
+		rtc.innerHTML = tc;
+		let rca = row.insertCell(3);
+		rca.innerHTML = ca;
+		let rcna = row.insertCell(4);
+		rcna.innerHTML = cna;
+		let rtt = row.insertCell(5);
+		rtt.innerHTML = tt;
+		let rtee = row.insertCell(6);
+		rtee.innerHTML = tee;
+		let rtea = row.insertCell(7);
+		rtea.innerHTML = tea;
+	}
+
+
+    }
+
 
 	function toHHMMSS(seconds) {
     	var h, m, s, result='';
@@ -355,7 +460,6 @@ dialStatus.text("Atendida - " + state);
 
     function recv_event_queue(params) {
 
-console.log(params);
             if (params[0].match(/QUEUE/)) {
 
 
@@ -374,6 +478,15 @@ console.log(params);
 		str = str + "\n";
                 addMessage(str);
 
+		var  aa = data[2].substr(4);
+		var  tc = t;
+		var  ca = data[3].substr(4);
+		var cna = data[4].substr(6);
+		var  tt = toHHMMSS(data[5].substr(4));
+		var tee = toHHMMSS(data[6].substr(4));
+		var tea = toHHMMSS(data[7].substr(4));
+
+		change_queue_tab(data[1], aa, tc, ca, cna, tt, tee, tea);
             } 
     }
 
@@ -409,6 +522,39 @@ console.log(params);
             }
     }
 
+    function rec_tab_add(data) {
+        const ctab = document.getElementById("tbrecs");
+	let row = ctab.insertRow();
+
+	let name = row.insertCell(0);
+	name.innerHTML = data[1];
+	let src = row.insertCell(1);
+	src.innerHTML = data[2];
+	let dst = row.insertCell(2);
+	dst.innerHTML = data[3];
+
+	let dir = row.insertCell(3);
+        if(data[4] == 'IN') {
+           direcao='Recebida';
+        } else if(data[4] == 'OUT'){
+           direcao='Efetuada';
+        }else
+           direcao='Efetuada';
+	dir.innerHTML = direcao;
+
+	let dur = row.insertCell(4);
+	dur.innerHTML = data[7];
+	let rec = row.insertCell(5);
+	var l = data[8].replace("utech/gravacoes","");;
+	var lock = (data[7] == 0) ? " disabled " : "";
+	var serv = serverUrl.val()
+	serv = serv.replace("ws://","");
+	serv = serv.replace(/:.*/, "");
+        rec.innerHTML = '<a href="http://'+serv+'/storage' + l +'" target="_blank" class="btn btn-primary btn-sm active '+ lock +' " role="button" aria-pressed="true">Grav</a>';
+
+
+    }
+
 
     function recv_event_records(params, msg) {
 
@@ -434,6 +580,7 @@ console.log(params);
                         splitDados[1]='Não identificado';
                       }
                       addMessage(splitDados[1]+" - "+splitDados[2]+" - "+splitDados[3]+" - "+descDirecao+" - "+splitDados[8]);
+                      rec_tab_add(splitDados);
                   }
                 }
             } 
