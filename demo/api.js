@@ -111,6 +111,7 @@ function onopen() {
     cmdAgents.removeAttr('disabled');
 
     $("#contentt").show();
+    $('#debug').trigger('click');
 
     connected = true;
 
@@ -127,6 +128,8 @@ function onclose(e) {
     logged = false;
     socket = false;
 
+    $('#debug').trigger('click');
+alert("trigger...");
     connectionStatus.text('Desconectado');
     requestButton.attr('disabled', 'disabled');
     requestMessagearea.attr('disabled', 'disabled');
@@ -180,7 +183,6 @@ function call_tab_status(callid,caller,called,state)
 		if(state == 'cleared')
 			return;
 
-		//var row = document.getElementById(callid).rowIndex;
 		let row = ctab.insertRow();
 		row.id = callid;
 		let id = row.insertCell(0);
@@ -403,42 +405,29 @@ function recv_event_call(params) {
 
 	if (ctab.rows[id]) {
 
+		let row = ctab.rows[id];
+		row.parentNode.removeChild(row);
 
-		let row = ctab.rows[callid];
-		if(state == 'cleared') {
-			row.parentNode.removeChild(row);
-		}else {
-			let st = row.cells[3];
-			st.innerHTML = state;
-		}
-
-	} else {
-
-		//var row = document.getElementById(callid).rowIndex;
-
-		let row = ctab.insertRow();
-		row.id = id;
-
-		let rid = row.insertCell(0);
-		rid.innerHTML = id;
-
-		let raa = row.insertCell(1);
-		raa.innerHTML = aa;
-
-		let rtc = row.insertCell(2);
-		rtc.innerHTML = tc;
-		let rca = row.insertCell(3);
-		rca.innerHTML = ca;
-		let rcna = row.insertCell(4);
-		rcna.innerHTML = cna;
-		let rtt = row.insertCell(5);
-		rtt.innerHTML = tt;
-		let rtee = row.insertCell(6);
-		rtee.innerHTML = tee;
-		let rtea = row.insertCell(7);
-		rtea.innerHTML = tea;
 	}
+	let row = ctab.insertRow();
+	row.id = id;
 
+	let rid = row.insertCell(0);
+	rid.innerHTML = id;
+	let raa = row.insertCell(1);
+	raa.innerHTML = aa;
+	let rtc = row.insertCell(2);
+	rtc.innerHTML = tc;
+	let rca = row.insertCell(3);
+	rca.innerHTML = ca;
+	let rcna = row.insertCell(4);
+	rcna.innerHTML = cna;
+	let rtt = row.insertCell(5);
+	rtt.innerHTML = tt;
+	let rtee = row.insertCell(6);
+	rtee.innerHTML = tee;
+	let rtea = row.insertCell(7);
+	rtea.innerHTML = tea;
 
     }
 

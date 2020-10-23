@@ -18,15 +18,15 @@
 		<table border=1>
                   <tr>
                     <td> URL: </td>
-                    <td> <input type="text" id="serverUrl" value="ws://10.0.0.200:3000" style="width: 300px;"> </td>
+                    <td> <input type="text" id="serverUrl" value="ws://10.0.0.1:3000" style="width: 300px;"> </td>
                   </tr>
                   <tr>
                     <td> Login: </td>
-                    <td> <input type="text" id="serverUser" value="2001" style="width: 300px;"> </td>
+                    <td> <input type="text" id="serverUser" value="1111" style="width: 300px;"> </td>
                   </tr>
                   <tr>
                     <td> Senha: </td>
-                    <td> <input type="text" id="serverPass" value="1q2w3e" style="width: 300px;"> </td>
+                    <td> <input type="text" id="serverPass" value="2222" style="width: 300px;"> </td>
                   </tr>
                   <tr>
                     <td> Acesso externo: </td>
@@ -178,9 +178,10 @@
 
 
 <script type="text/javascript" src="jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="api.js?tok=11rrrr4123493"></script>
+<script type="text/javascript" src="api.js?tok=11rrrr4123a1493"></script>
 <script>
 $("#contentt").hide();
+$('#debug').trigger('click');
 </script>
 </body>
 </html>
