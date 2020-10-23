@@ -129,7 +129,6 @@ function onclose(e) {
     socket = false;
 
     $('#debug').trigger('click');
-alert("trigger...");
     connectionStatus.text('Desconectado');
     requestButton.attr('disabled', 'disabled');
     requestMessagearea.attr('disabled', 'disabled');
