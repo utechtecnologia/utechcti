@@ -22,11 +22,11 @@
                   </tr>
                   <tr>
                     <td> Login: </td>
-                    <td> <input type="text" id="serverUser" value="1111" style="width: 300px;"> </td>
+                    <td> <input type="text" id="serverUser" value="2000" style="width: 300px;"> </td>
                   </tr>
                   <tr>
                     <td> Senha: </td>
-                    <td> <input type="text" id="serverPass" value="2222" style="width: 300px;"> </td>
+                    <td> <input type="text" id="serverPass" value="1234" style="width: 300px;"> </td>
                   </tr>
                   <tr>
                     <td> Acesso externo: </td>
@@ -61,6 +61,7 @@
 			<!--<input type=text id="requestDialOrigem" disabled="disabled">-->
 			Numero:<input type=text id="requestDialNumber" disabled="disabled">
 			<button id="requestDialButton" disabled="disabled">Discar</button>
+			<button type="button" id="requestXferButton" disabled="disabled" data-toggle="modal" data-target="#TransferModal">Transferir</button>
 			<label>&nbsp;&nbsp;Status:</label>
 			<span id="dialStatus"></span>
 		</div>
@@ -73,6 +74,7 @@
         <li><a href="#calls" data-toggle="tab">Chamadas</a></li>
         <li onclick="javascript:$('#cmdRecords').click();"><a href="#records" data-toggle="tab">Grava&ccedil;&otilde;es</a></li>
         <li><a href="#queues" data-toggle="tab">Filas</a></li>
+        <li><a href="#agent" data-toggle="tab">Agente</a></li>
     </ul>
     <div id="my-tab-content" class="tab-content">
         <div class="tab-pane active" id="debug">
@@ -97,7 +99,11 @@
 		</div>
 	  </fieldset>
 	  <fieldset id="messageArea">
-		<legend>Message Log <button id="clearMessage">Limpar</button> - Debug: <input type="checkbox" id="msgdebug"/></legend>
+		<legend>Message Log
+          <button id="clearMessage">Limpar</button>
+          - Debug: <input type="checkbox" id="msgdebug"/>
+          - Call EVTs: <input type="checkbox" id="calldebug"/>
+        </legend>
 		<div id="messages"></div>
 	  </fieldset>
         </div>
@@ -171,14 +177,88 @@
             <tbody id="tbqueues">
             <tbody>
 	  </table>
-
+        </div>
+        <div class="tab-pane" id="agent">
+	  <br>
+	<fieldset>
+		<legend>Login do Agente</legend>
+		<table border=1>
+                  <tr>
+                    <td> ID: </td>
+                    <td> <input type="text" name="agent_id" id="agent_id" value="110" style="width: 300px;"> </td>
+                  </tr>
+                  <tr>
+                    <td> Senha: </td>
+                    <td> <input type="text" name="agent_pass" id="agent_pass" value="1234" style="width: 300px;"> </td>
+                  </tr>
+		</table>
+		<table border=0 width="100%">
+                  <tr>
+                    <td colspan=1 width="100%">
+                        <br>
+			<button id="ag_connectButton">Conectar</button>
+			<button id="ag_disconnectButton">Desconectar</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td colspan=2> <BR>
+			<label>Status:</label>
+			<span id="ag_connectionStatus">Desconectado</span>
+                    </td>
+                  </tr>
+		</table>
+	</fieldset>
+        <div class="tab-pane" id="agentpause">
+		<table border=0 >
+                  <tr>
+                    <td >
+                        <br>
+			<button id="ag_pauseButton">Pausar</button>
+			<button id="ag_unpauseButton">Despausar</button>
+                    </td>
+                    <td>
+			<br>&nbsp;
+                        <select name=nomepausa id=nomepausa>
+				<option value=0>Administrativa</option>
+			</select>
+                    </td>
+                  </tr>
+		</table>
         </div>
     </div>
+
+
+<!-- Modal Transfer -->
+<div class="modal fade" id="TransferModal" tabindex="-1" role="dialog" aria-labelledby="TransferModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="TransferModalLabel">Selectione um Ramal para transferência</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      
+      <div class="modal-body">
+        Tipo: <select name="TransferType">
+                <option value="1">Cega</option>
+                <option value="2">Consulta</option>
+              </select>
+        <BR>
+        Número: <input type=text name=TransferRml>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+        <button type="button" class="btn btn-primary" id="TransferExec" value="transferir" >Transferir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </div>
 
 
-<script type="text/javascript" src="jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="api.js?tok=11rrrr4123a1493"></script>
+<script type="text/javascript" src="api.js?tok=11rrrr4123ai1493"></script>
 <script>
 $("#contentt").hide();
 $('#debug').trigger('click');

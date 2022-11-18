@@ -2,6 +2,7 @@
 const CALL_DIRECTION_INCOMING = 0;
 const CALL_DIRECTION_OUTGOING = 1;
 
+var pause = 0;
 var msgLog = new Array;
 var msgId = 0;
 var msgError = null;
@@ -11,10 +12,15 @@ var logged = false;
 var socket = null;
 var permissions = 0;
 var debugenable = false;
+var ag_logged = false;
+var gcallid = null;
+var in_transfer = false;
+var onlycallevts = false;
 
 function debug(message) {
     if (debugStatus) {
-        console.log(message);
+        if(onlycallevts == false)
+            console.log(message);
     }
 }
 
@@ -82,7 +88,10 @@ function parser(cmd, len) {
 
 // Socket
 function sendMessage(msg) {
-    if (!connected) return;
+    if (!connected) {
+        alert("Sent..But disconnected!");
+        return;
+    }
     debug('=> ' + msg);
     msg += "\r\n\r\n";
     socket.send(msg);
@@ -150,6 +159,8 @@ function onclose(e) {
 
     $("#contentt").hide();
 
+     ag_logged = false;
+
     // Try to reconnect ??
 };
 
@@ -162,6 +173,9 @@ function onerror(e) {
 
 function function_call_end(){
     dialStatus.text("Chamada finalizada!");
+    gcallid = null;
+    $("#requestXferButton").attr('disabled', 'enabled');
+    $("#TransferModal").modal('hide');
 }
 
 function call_tab_status(callid,caller,called,state)
@@ -198,6 +212,40 @@ function call_tab_status(callid,caller,called,state)
 	}
 }
 
+function recv_event_xfer(cmd, params) {
+
+	     resp = "??";
+             for (i = 1; i < params.length; i++) {   
+                if (params[i].match(/RESP:/)) {
+                    resp = params[i].substr(5);
+                }
+             }
+
+             addMessage("Transfer: "+cmd+" Status: "+resp);
+
+	     if(resp == "OK") {
+
+	             if(cmd == 'BLIND_TRANSFER') {
+        	        $("#TransferModal").modal('hide');
+	             }else {
+			if($("#TransferExec").val() == "desligar") {
+				$("#TransferModal").modal('hide');
+				$("#TransferExec").val("transferir");
+				$("#TransferExec").text('Transferir');
+				alert("Transferência realizada!!");
+			} else {
+				$("#TransferExec").text('Finalizar Chamada de Consulta');
+				$("#TransferExec").prop('value','desligar');
+			}
+	             }
+             } else {
+			$("#TransferModal").modal('hide');
+			$("#TransferExec").val("transferir");
+			$("#TransferExec").text('Transferir');
+			alert("Erro na transferência!");
+             }
+
+}
 
 function recv_event_call(params) {
 
@@ -245,6 +293,7 @@ function recv_event_call(params) {
     }
     debug('OCall event callid:'+callid+' state:'+state+' caller:'+caller+' called:'+called);
     addMessage('OCall event callid:'+callid+' state:'+state+' caller:'+caller+' called:'+called);
+    gcallid = callid;
 
     if (callid && state)
     	    call_tab_status(callid,caller,called,state);
@@ -262,6 +311,7 @@ function recv_event_call(params) {
 
             case 'established':
             dialStatus.text("Atendida - " + state);
+            $("#requestXferButton").removeAttr('disabled');
             break;
 
             case 'queued':
@@ -273,8 +323,8 @@ function recv_event_call(params) {
            break;
 
            case 'cleared':
-           dialStatus.text("Atendida - " + state);
-           setTimeout(function_call_end, 5000);
+           dialStatus.text("Finalizada - " + state);
+           setTimeout(function_call_end, 2000);
            break;
 
             case 'conferenced':
@@ -283,10 +333,12 @@ function recv_event_call(params) {
 
            case 'transferred':
            dialStatus.text("Atendida - " + state);
+           setTimeout(function_call_end, 2000);
            break;
 
            case 'diverted':
            dialStatus.text("FWD - " + state);
+           setTimeout(function_call_end, 2000);
            break;
 
            default:
@@ -335,6 +387,158 @@ function recv_event_call(params) {
                 serverUrl.attr('disabled', 'disabled');
             }
     }
+
+/**
+    ami_req_agentLoggedOn = 0,
+    ami_req_agentLoggedOff = 1,
+    ami_req_agentNotReady = 2,
+    ami_req_agentReady = 3,
+    ami_req_agentWorkingAfterCall = 4
+
+    ami_agentNotReady = 0,
+    ami_agentNull = 1,
+    ami_agentReady = 2,
+    ami_agentBusy = 3,
+    ami_agentWorkingAfterCall = 4
+
+*/
+    function agente_set_state(state) {
+
+        if(state == 0)
+            return "Pausa";
+        if(state == 1)
+            return "Desconectado";
+        if(state == 2)
+            return "Conectado";
+        if(state == 3)
+            return "Ocupado";
+        if(state == 4)
+            return "Pós atendimento";
+
+        return "Desconhecido!";
+    }
+
+    function recv_event_send_message(params) {
+        if(onlycallevts == false)
+            console.log(params);
+    }
+
+    function recv_event_message(params) {
+        if(onlycallevts == false)
+            console.log(params);
+        var dev = "";
+        var id = "";
+        var st = "";
+        var error = "";
+        var message = 0;
+    for (i = 1; i < params.length; i++) {
+        if (params[i].match(/DEV:/)) {
+            dev = params[i].substr(4);
+        } else if (params[i].match(/ID:/)) {
+            id = params[i].substr(3);
+        } else if (params[i].match(/STATUS:/)) {
+            st = params[i].substr(7);
+        } else if (params[i].match(/ERROR:/)) {
+            error = params[i].substr(6);
+        } else if (params[i].match(/MESSAGE:/)) {
+            message = params[i].substr(8);
+        }
+    }
+    if(onlycallevts == false) {
+        debug('Message event DEV:'+dev+' ID:'+id+' STATUS:'+st+' ERR:'+error+' MESSAGE:'+message);
+        addMessage('MSG STAUTS DEV:'+dev+' ID:'+id+' STATUS:'+st+' ERR:'+error+' MESSAGE:'+message);
+    }
+    }
+
+
+
+    function recv_event_apause(params) {
+        for (i = 1; i < params.length; i++) {
+            if (params[i].match(/PAUSE:/)) {
+                var h = params[i].substr(6);
+                h = h.replace(/\"/g, '');
+                h = h.replace(/\;/g, '');
+                h = h.split(',');
+                for (i = 0; i < h.length; i++) {
+  	            $("#nomepausa").append(new Option(h[i+1], h[i]));
+                    i++;
+                }
+            break;
+            }
+        }
+    }
+
+    function recv_event_agent(params) {
+
+	    ag_logged = false;
+            msgError = '';
+	    var inst = null;
+	    var state = 1;
+	    pauseopt = null;
+            for (i = 1; i < params.length; i++) {
+                if (params[i].match(/ID:/))
+                    id = params[i].substr(3);
+                if (params[i].match(/STATE:/))
+                    state = params[i].substr(6);
+                if (params[i].match(/GROUP:/))
+                    group = params[i].substr(6);
+                if (params[i].match(/GROUP:/))
+                    time = params[i].substr(5);
+                if (params[i].match(/INST:/))
+                    inst = params[i].substr(5);
+                if (params[i].match(/PAUSE:/)) {
+                    pauseopt = params[i].substr(6);
+		}
+                if (params[i].match(/RESP:/)) {
+                    ag_logged = params[i].substr(5) == "OK" ? true : false;
+                    if( params[i].substr(5) == "ERROR"){
+                        alert("Agent login errro!");
+                        $("#ag_connectButton").show();
+                        $("#ag_disconnectButton").hide();
+                    }
+                }
+            }
+	    if(state != 1)
+                ag_logged = true;
+
+	    agst = agente_set_state(state);
+
+            if(pauseopt != null)
+                pause = pauseopt;
+
+            if(ag_logged == false) {
+
+                $("#ag_connectionStatus").text(agst);
+                $("#ag_connectButton").show();
+                $("#ag_disconnectButton").hide();
+                $("input[name=agent_id]").removeAttr('disabled');
+                $("input[name=agent_pass]").removeAttr('disabled');
+                $("#ag_pauseButton").hide();
+                $("#ag_unpauseButton").hide();
+                $("#agentpause").hide();
+            } else {
+                $("#ag_connectButton").hide();
+                $("#ag_disconnectButton").show();
+                $("#ag_connectionStatus").text(agst);
+                $("input[name=agent_id]").attr('disabled', 'enabled');
+                $("input[name=agent_pass]").attr('disabled', 'enabled');
+                $("#ag_pauseButton").show();
+                $("#ag_unpauseButton").hide();
+                $("#agentpause").show();
+
+            }
+
+
+	    if(state == 0) {
+                $("#ag_pauseButton").hide();
+                $("#ag_unpauseButton").show();
+		$('#nomepausa').val(pause);
+		$('#nomepausa').prop('disabled', 'disabled');
+            } else {
+		$('#nomepausa').removeAttr('disabled');
+	    }
+    }
+
 
     function recv_event_date(params) {
 
@@ -589,10 +793,6 @@ function recv_event_call(params) {
             }
     }
 
-    function recv_event_agents(params) {
-
-    }
-
     function recv_event_dial(params) {
 
         if (params[1].match(/RESP:OK/)) {
@@ -604,12 +804,24 @@ function recv_event_call(params) {
 
     function onmessage(e) {
         var msg = e.data;
-
+        var raw = msg;
         msg = msg.replace(/\r\n\r\n/, '');
 
         var params = parser(msg, msg.length);
-        debug('<= ' + params);
+        var t = getTimestampInSeconds();
 
+    if(onlycallevts == true) {
+
+        if(params[0] == "CALL" || params[0] == "ACALL" || params[0] == "OCALL") {
+            console.log('[' + t + '] <= ' + msg);
+        }
+
+    } else {
+        debug('[' + t + '] <= ' + params);
+    	if(debugenable == true) {
+	    	addMessage(params, "RECV");
+    	}
+    }
         switch(params[0]) {
           case 'STATUS':
               addMessage(params);
@@ -655,10 +867,28 @@ function recv_event_call(params) {
               recv_event_queue(params);
           break;
 
+          case "AGENT":
+              recv_event_agent(params);
+          break;
+
+          case "APAUSE":
+              recv_event_apause(params);
+          break;
+
+          case "BLIND_TRANSFER":
+          case "ATTENDANT_TRANSFER":
+              recv_event_xfer(params[0], params);
+          break;
+
+          case "MESSAGE":
+              recv_event_message(params);
+          break;
+
+          case "SEND_MESSAGE":
+              recv_event_send_message(params);
+          break;
+
           default:
-		if(debugenable == true) {
-			addMessage(params, "RECV");
-		}
 		debug("Comando: "+params[0]+" nao implementado!");
         }
     }
@@ -670,10 +900,22 @@ function login(user, pass, external) {
     } else { 
         msg = 'LOGIN USER:'+user+' PASSWORD:'+pass;
     }
-    console.log("sendMessage: "+msg);
+    if(onlycallevts == false)
+        console.log("sendMessage: "+msg);
     addMessage(msg, 'SENT');
     sendMessage(msg);
 }
+
+function agent_login(inst, id, pass, dev, state, pause) {
+    if (!connected || !logged) return;
+
+    msg = 'AGENT INST:'+inst+' ID:'+id+' PASSWORD:'+pass+' GROUP: STATE:'+state+ ' PAUSE:'+pause;
+    if(onlycallevts == false)
+        console.log("sendMessage: "+msg);
+    addMessage(msg, 'SENT');
+    sendMessage(msg);
+}
+
 
 
 function getContact(name, number) {
@@ -693,11 +935,39 @@ function getHistory() {
 }
 
 
+function padTo2Digits(num) {
+  return num.toString().padStart(2, '0');
+}
+
+function formatDate(date) {
+  return [
+    padTo2Digits(date.getDate()),
+    padTo2Digits(date.getMonth() + 1),
+    date.getFullYear(),
+  ].join('/');
+}
+
+function getCurrentTimestamp () {
+  return Date.now()
+}
+
+function getTimestampInSeconds () {
+  return Math.floor(Date.now() / 1000)
+}
+
+function startsWith(str, word) {
+    return str.lastIndexOf(word, 0) === 0;
+}
+
 var clearLog = function() {
     $('#messages').html('');
 }
 
 var addMessage = function(data, type) {
+
+    var t = getTimestampInSeconds();
+
+    data = "[" + t + "] " + data;
 
     var msg = $('<pre>').text(data);
     if (type === 'SENT')
@@ -750,6 +1020,73 @@ $('#clearMessage').click(function(e) {
     clearLog();
 });
 
+$("#TransferExec").click(function(e) {
+    var xferdst = $("input[name=TransferRml]").val();
+    var xfertyp = $("select[name=TransferType]").val();
+
+    if(xfertyp == 1) {
+        sendMessage("BLIND_TRANSFER CALLID:" + gcallid + " TO:" + xferdst);
+    }
+
+    if(xfertyp == 2) {
+	if($("#TransferExec").val() == "desligar") {
+            sendMessage("ATTENDANT_TRANSFER CALLID:" + gcallid + " TO:" + xferdst);
+	} else {
+            sendMessage("ATTENDANT_TRANSFER CALLID:" + gcallid + " TO:" + xferdst);
+        }
+    }
+
+
+});
+
+$("#ag_pauseButton").click(function(e) {
+    $("#ag_pauseButton").hide();
+    $("#ag_unpauseButton").show();
+
+    var ag_user = $("input[name=agent_id]").val();
+    var ag_pass = $("input[name=agent_pass]").val();
+    var pausa = $("select[name=nomepausa]").val();
+    agent_login(1, ag_user, ag_pass, serverUser.val(), 2, pausa);
+});
+
+
+$("#ag_unpauseButton").click(function(e) {
+    if(ag_logged = false) {
+        alert("Agente não conectado!");
+        return true;
+    }
+
+    $("#ag_pauseButton").show();
+    $("#ag_unpauseButton").hide();
+
+    var ag_user = $("input[name=agent_id]").val();
+    var ag_pass = $("input[name=agent_pass]").val();
+    agent_login(1, ag_user, ag_pass, serverUser.val(), 3, 0);
+});
+
+
+$("#ag_connectButton").click(function(e) {
+    $("#ag_connectButton").hide();
+    $("#ag_disconnectButton").show();
+
+    var ag_user = $("input[name=agent_id]").val();
+    var ag_pass = $("input[name=agent_pass]").val();
+    agent_login(1, ag_user, ag_pass, serverUser.val(), 0, 0);
+});
+
+$("#ag_disconnectButton").click(function(e) {
+    $("#ag_connectButton").show();
+    $("#ag_disconnectButton").hide();
+
+    if(ag_logged = false) {
+        alert("Agente não conectado!");
+        return true;
+    }
+
+    var ag_user = $("input[name=agent_id]").val();
+    var ag_pass = $("input[name=agent_pass]").val();
+    agent_login(1, ag_user, ag_pass, serverUser.val(), 1, 0);
+});
 
 
 connectButton.click(function(e) {
@@ -823,3 +1160,15 @@ msgdebug.change(function(e) {
         alert("Debug desabilitado!");
     }
 });
+
+
+$('#calldebug').change(function(e) {
+	if(onlycallevts == false) {
+	    onlycallevts = true;
+       	alert("Somente eventos de chamadas serão mostrados!");
+	}else{
+        alert("Debug de chamadas desabilitado!");
+		onlycallevts = false;
+    }
+});
+
